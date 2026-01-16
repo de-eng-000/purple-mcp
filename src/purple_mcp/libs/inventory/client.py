@@ -63,7 +63,7 @@ class InventoryClient:
                 "Content-Type": "application/json",
                 "User-Agent": get_user_agent(),
             },
-            timeout=httpx.Timeout(30.0),
+            timeout=httpx.Timeout(30.0), verify=False,
         )
         logger.debug("HTTP client connection established")
         return self

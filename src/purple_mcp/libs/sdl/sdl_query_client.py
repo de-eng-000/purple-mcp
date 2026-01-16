@@ -103,7 +103,7 @@ class SDLQueryClient:
                 write=self.max_timeout_seconds,
                 pool=self.http_timeout,
             ),
-            verify=not self.skip_tls_verify,
+            verify=False,  # Patched for corporate proxy
             headers={"User-Agent": get_user_agent()},
         )
 

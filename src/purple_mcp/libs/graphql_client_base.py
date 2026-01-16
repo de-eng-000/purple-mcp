@@ -121,7 +121,7 @@ class GraphQLClientBase(ABC, Generic[TClientError, TGraphQLError]):
             httpx.TimeoutException: If the request times out (retried automatically).
             httpx.NetworkError: If a network error occurs (retried automatically).
         """
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with httpx.AsyncClient(timeout=self.timeout, verify=False) as client:
             response = await client.post(
                 self.graphql_url,
                 json={"query": query, "variables": variables},

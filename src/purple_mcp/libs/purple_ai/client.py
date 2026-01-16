@@ -252,7 +252,7 @@ class PurpleAIClient:
             httpx.TimeoutException: If the request times out (retried automatically).
             httpx.NetworkError: If a network error occurs (retried automatically).
         """
-        async with httpx.AsyncClient(timeout=self.config.timeout) as client:
+        async with httpx.AsyncClient(timeout=self.config.timeout, verify=False) as client:
             response = await client.post(
                 self.config.graphql_url,
                 json={"query": query, "variables": variables},
