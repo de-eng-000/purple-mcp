@@ -12,7 +12,7 @@ from functools import lru_cache
 from typing import ClassVar, Final, Literal
 from urllib.parse import urlparse
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from purple_mcp import __version__
@@ -49,6 +49,20 @@ STATELESS_HTTP_ENV = f"{ENV_PREFIX}STATELESS_HTTP"
 TRANSPORT_MODE_ENV = f"{ENV_PREFIX}TRANSPORT_MODE"
 
 
+def _strip_accidental_bearer_prefix(value: str) -> str:
+    """Remove a leading ``Bearer `` prefix if present (case-insensitive).
+
+    ``PURPLEMCP_CONSOLE_TOKEN`` must be the raw API token. Users sometimes paste
+    the full Authorization header value; GraphQL then becomes ``Bearer Bearer …``
+    and SentinelOne returns 401.
+    """
+    s = value.strip()
+    prefix = "bearer "
+    if s.lower().startswith(prefix):
+        return s[len(prefix) :].strip()
+    return s
+
+
 class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
 
@@ -56,6 +70,24 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_console_token_env(cls, data: object) -> object:
+        """Strip ``Bearer `` from ``PURPLEMCP_CONSOLE_TOKEN`` before fields load."""
+        if not isinstance(data, dict):
+            return data
+        out = dict(data)
+        token_key_upper = CONSOLE_TOKEN_ENV.upper()
+        for key in list(out.keys()):
+            if (
+                isinstance(key, str)
+                and key.upper() == token_key_upper
+                and isinstance(out[key], str)
+            ):
+                out[key] = _strip_accidental_bearer_prefix(out[key])
+                break
+        return out
 
     # Scalyr/PowerQuery Configuration
     # Note: SDL uses the same token as Console for authentication

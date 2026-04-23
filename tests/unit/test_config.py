@@ -100,6 +100,17 @@ def test_sdl_token_uses_console_token(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.sdl_api_token == settings.graphql_service_token
 
 
+def test_console_token_strips_bearer_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Bearer-pasted tokens should normalize to raw value for SDL and GraphQL."""
+    raw = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake"
+    monkeypatch.setenv(f"{ENV_PREFIX}CONSOLE_TOKEN", f"Bearer   {raw}  ")
+    monkeypatch.setenv(f"{ENV_PREFIX}CONSOLE_BASE_URL", "https://console.example.test")
+
+    settings = Settings()
+    assert settings.sdl_api_token == raw
+    assert settings.graphql_service_token == raw
+
+
 @pytest.mark.parametrize(
     "set_console,set_base_url,missing",
     [
